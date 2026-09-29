@@ -1,7 +1,9 @@
 import { ConfigService } from '@nestjs/config';
 import { fingerprintOf, IdempotencyStore } from './idempotency-store.service';
 
-const buildStore = (overrides: Partial<Record<string, number>> = {}): IdempotencyStore => {
+const buildStore = (
+  overrides: Partial<Record<string, number>> = {},
+): IdempotencyStore => {
   const config = {
     getOrThrow: () => ({
       ttlMs: 60_000,
@@ -30,7 +32,9 @@ describe('IdempotencyStore', () => {
     const result = store.reserve('key-1', fingerprint);
 
     expect(result.reserved).toBe(false);
-    expect(result.reserved === false && result.existing.state).toBe('in_flight');
+    expect(result.reserved === false && result.existing.state).toBe(
+      'in_flight',
+    );
   });
 
   it('surfaces the completed record with its cached body for replay', () => {
@@ -53,10 +57,15 @@ describe('IdempotencyStore', () => {
     const store = buildStore();
     store.reserve('key-1', fingerprint);
 
-    const result = store.reserve('key-1', fingerprintOf({ question: 'different' }));
+    const result = store.reserve(
+      'key-1',
+      fingerprintOf({ question: 'different' }),
+    );
 
     expect(result.reserved).toBe(false);
-    expect(result.reserved === false && result.existing.fingerprint).toBe(fingerprint);
+    expect(result.reserved === false && result.existing.fingerprint).toBe(
+      fingerprint,
+    );
   });
 
   it('frees the key after release so a failed call can be retried', () => {

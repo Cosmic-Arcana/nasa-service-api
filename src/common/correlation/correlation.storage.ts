@@ -13,5 +13,7 @@ export const correlationStorage = new AsyncLocalStorage<CorrelationStore>();
 export const getCorrelationId = (): string | null =>
   correlationStorage.getStore()?.correlationId ?? null;
 
-export const runWithCorrelationId = <T>(correlationId: string, callback: () => T): T =>
-  correlationStorage.run({ correlationId }, callback);
+export const runWithCorrelationId = <T>(
+  correlationId: string,
+  callback: () => T,
+): T => correlationStorage.run({ correlationId }, callback);

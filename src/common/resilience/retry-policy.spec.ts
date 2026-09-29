@@ -55,9 +55,14 @@ describe('computeBackoffDelay', () => {
     for (let attempt = 1; attempt <= 5; attempt += 1) {
       for (let sample = 0; sample < 50; sample += 1) {
         const delay = computeBackoffDelay(attempt, config);
-        const ceiling = Math.min(config.initialDelayMs * 2 ** (attempt - 1), config.maxDelayMs);
+        const ceiling = Math.min(
+          config.initialDelayMs * 2 ** (attempt - 1),
+          config.maxDelayMs,
+        );
 
-        expect(delay).toBeGreaterThanOrEqual(Math.round(ceiling * (1 - config.jitterRatio)) - 1);
+        expect(delay).toBeGreaterThanOrEqual(
+          Math.round(ceiling * (1 - config.jitterRatio)) - 1,
+        );
         expect(delay).toBeLessThanOrEqual(ceiling);
       }
     }

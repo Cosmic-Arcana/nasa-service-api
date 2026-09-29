@@ -16,6 +16,11 @@ import {
 import type { MessageEnvelope } from '../messaging/message-envelope';
 import { fingerprintOf, IdempotencyStore } from './idempotency-store.service';
 
+function expressRoutePath(request: Request): string {
+  const route = request.route as { path?: unknown } | undefined;
+  return typeof route?.path === 'string' ? route.path : request.path;
+}
+
 interface RequestIdentity {
   key: string;
   fingerprint: string;
@@ -37,12 +42,18 @@ export class IdempotencyInterceptor implements NestInterceptor {
     const reservation = this.store.reserve(key, fingerprint);
 
     if (!reservation.reserved) {
-      return this.handleDuplicate(context, key, fingerprint, reservation.existing);
+      return this.handleDuplicate(
+        context,
+        key,
+        fingerprint,
+        reservation.existing,
+      );
     }
 
     return next.handle().pipe(
       tap({
-        next: (body) => this.store.complete(key, this.statusCodeOf(context), body),
+        next: (body) =>
+          this.store.complete(key, this.statusCodeOf(context), body),
         error: () => this.store.release(key),
       }),
     );
@@ -52,7 +63,12 @@ export class IdempotencyInterceptor implements NestInterceptor {
     context: ExecutionContext,
     key: string,
     fingerprint: string,
-    existing: { state: string; fingerprint: string; statusCode?: number; body?: unknown },
+    existing: {
+      state: string;
+      fingerprint: string;
+      statusCode?: number;
+      body?: unknown;
+    },
   ): Observable<unknown> {
     if (existing.fingerprint !== fingerprint) {
       this.logger.warn('idempotency key reused with a different payload', {
@@ -69,15 +85,19 @@ export class IdempotencyInterceptor implements NestInterceptor {
     }
 
     if (existing.state === 'in_flight') {
-      this.logger.warn('duplicate request rejected while original is in flight', {
-        idempotencyKey: key,
-        outcome: 'rejected',
-      });
+      this.logger.warn(
+        'duplicate request rejected while original is in flight',
+        {
+          idempotencyKey: key,
+          outcome: 'rejected',
+        },
+      );
       return throwError(
         () =>
           new ConflictException({
             code: 'idempotency_key_in_flight',
-            message: 'a request with this idempotency key is still being processed',
+            message:
+              'a request with this idempotency key is still being processed',
           }),
       );
     }
@@ -126,7 +146,11 @@ export class IdempotencyInterceptor implements NestInterceptor {
 
     return {
       key,
-      fingerprint: fingerprintOf([request.method, request.route?.path ?? request.path, request.body]),
+      fingerprint: fingerprintOf([
+        request.method,
+        expressRoutePath(request),
+        request.body,
+      ]),
     };
   }
 }

@@ -1,4 +1,5 @@
-import { Injectable, LoggerService, LogLevel, Scope } from '@nestjs/common';
+import { Injectable, LoggerService, Scope } from '@nestjs/common';
+import type { LogLevel } from '@nestjs/common';
 import { inspect } from 'node:util';
 import { getCorrelationId } from '../correlation/correlation.storage';
 
@@ -21,7 +22,9 @@ const REDACTED_KEYS = new Set([
   'question',
 ]);
 
-export const redact = (fields: Record<string, unknown>): Record<string, unknown> => {
+export const redact = (
+  fields: Record<string, unknown>,
+): Record<string, unknown> => {
   const output: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(fields)) {
     output[key] = REDACTED_KEYS.has(key.toLowerCase()) ? '[redacted]' : value;
@@ -77,7 +80,8 @@ export class StructuredLogger implements LoggerService {
       service: this.service,
       correlationId: getCorrelationId(),
       context: context ?? null,
-      message: typeof message === 'string' ? message : inspect(message, { depth: 3 }),
+      message:
+        typeof message === 'string' ? message : inspect(message, { depth: 3 }),
       ...redact(fields),
     };
 

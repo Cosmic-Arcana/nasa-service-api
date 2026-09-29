@@ -30,7 +30,10 @@ export const configuration = (): AppConfig => ({
   nodeEnv: process.env.NODE_ENV as string,
   logLevel: process.env.LOG_LEVEL as string,
   http: { port: Number(process.env.HTTP_PORT) },
-  tcp: { host: process.env.TCP_HOST as string, port: Number(process.env.TCP_PORT) },
+  tcp: {
+    host: process.env.TCP_HOST as string,
+    port: Number(process.env.TCP_PORT),
+  },
   nasaApi: {
     baseUrl: process.env.NASA_API_BASE_URL as string,
     apiKey: process.env.NASA_API_KEY as string,

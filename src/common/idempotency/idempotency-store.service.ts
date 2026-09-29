@@ -1,4 +1,10 @@
-import { Inject, Injectable, Logger, OnApplicationShutdown, OnModuleInit } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  Logger,
+  OnApplicationShutdown,
+  OnModuleInit,
+} from '@nestjs/common';
 import { createHash } from 'node:crypto';
 import { ConfigService } from '@nestjs/config';
 import type { IdempotencyConfig } from '../../config/configuration';
@@ -19,7 +25,10 @@ interface StoredRecord {
 }
 
 export const fingerprintOf = (parts: unknown): string =>
-  createHash('sha256').update(JSON.stringify(parts ?? null)).digest('hex').slice(0, 32);
+  createHash('sha256')
+    .update(JSON.stringify(parts ?? null))
+    .digest('hex')
+    .slice(0, 32);
 
 /**
  * Deliberately in-process: there is no Redis yet, so idempotency guarantees hold per
@@ -65,7 +74,10 @@ export class IdempotencyStore implements OnModuleInit, OnApplicationShutdown {
    * Reserve-or-return in one step: concurrent duplicates must never both see an empty slot,
    * which is why this is not a get() followed by a set().
    */
-  reserve(key: string, fingerprint: string): { reserved: true } | { reserved: false; existing: IdempotencyRecord } {
+  reserve(
+    key: string,
+    fingerprint: string,
+  ): { reserved: true } | { reserved: false; existing: IdempotencyRecord } {
     const existing = this.get(key);
     if (existing) {
       return { reserved: false, existing };
@@ -102,9 +114,9 @@ export class IdempotencyStore implements OnModuleInit, OnApplicationShutdown {
     if (this.records.size < this.config.maxEntries) {
       return;
     }
-    const oldestKey = this.records.keys().next().value;
-    if (oldestKey !== undefined) {
-      this.records.delete(oldestKey);
+    const oldest = this.records.keys().next();
+    if (!oldest.done) {
+      this.records.delete(oldest.value);
       this.logger.warn('idempotency store full, evicted oldest entry', {
         context: IdempotencyStore.name,
         maxEntries: this.config.maxEntries,
@@ -122,7 +134,10 @@ export class IdempotencyStore implements OnModuleInit, OnApplicationShutdown {
       }
     }
     if (removed > 0) {
-      this.logger.debug('idempotency sweep completed', { removed, remaining: this.records.size });
+      this.logger.debug('idempotency sweep completed', {
+        removed,
+        remaining: this.records.size,
+      });
     }
   }
 }

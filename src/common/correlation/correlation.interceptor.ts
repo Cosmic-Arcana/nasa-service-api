@@ -1,4 +1,9 @@
-import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nestjs/common';
+import {
+  CallHandler,
+  ExecutionContext,
+  Injectable,
+  NestInterceptor,
+} from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { Observable } from 'rxjs';
 import { isValidCorrelationId } from './correlation.constants';
@@ -18,10 +23,14 @@ export class CorrelationInterceptor implements NestInterceptor {
 
     const payload = context.switchToRpc().getData<MessageEnvelope>();
     const incoming = payload?.meta?.correlationId;
-    const correlationId = isValidCorrelationId(incoming) ? incoming : randomUUID();
+    const correlationId = isValidCorrelationId(incoming)
+      ? incoming
+      : randomUUID();
 
     return new Observable((subscriber) =>
-      runWithCorrelationId(correlationId, () => next.handle().subscribe(subscriber)),
+      runWithCorrelationId(correlationId, () =>
+        next.handle().subscribe(subscriber),
+      ),
     );
   }
 }

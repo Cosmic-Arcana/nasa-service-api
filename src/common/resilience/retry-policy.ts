@@ -1,5 +1,12 @@
 import { Logger } from '@nestjs/common';
-import { MonoTypeOperatorFunction, retry, throwError, timeout, timer, pipe } from 'rxjs';
+import {
+  MonoTypeOperatorFunction,
+  retry,
+  throwError,
+  timeout,
+  timer,
+  pipe,
+} from 'rxjs';
 import type { RetryConfig } from '../../config/configuration';
 
 const RETRYABLE_STATUS_CODES = new Set([408, 425, 429, 500, 502, 503, 504]);
@@ -22,7 +29,12 @@ export const isRetryableError = (error: unknown): boolean => {
     return false;
   }
 
-  const candidate = error as { code?: string; status?: number; response?: { status?: number }; name?: string };
+  const candidate = error as {
+    code?: string;
+    status?: number;
+    response?: { status?: number };
+    name?: string;
+  };
 
   if (candidate.name === 'TimeoutError') {
     return true;
@@ -40,8 +52,12 @@ export const isRetryableError = (error: unknown): boolean => {
 };
 
 /** Full jitter: spreads retries of simultaneously-failing callers instead of synchronising them. */
-export const computeBackoffDelay = (attempt: number, config: RetryConfig): number => {
-  const exponential = config.initialDelayMs * config.backoffMultiplier ** (attempt - 1);
+export const computeBackoffDelay = (
+  attempt: number,
+  config: RetryConfig,
+): number => {
+  const exponential =
+    config.initialDelayMs * config.backoffMultiplier ** (attempt - 1);
   const capped = Math.min(exponential, config.maxDelayMs);
   const jitter = capped * config.jitterRatio * Math.random();
   return Math.round(capped - capped * config.jitterRatio + jitter);
