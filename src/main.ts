@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
-import { LogLevel } from '@nestjs/common';
+import type { LogLevel } from '@nestjs/common';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { AppModule } from './app.module';
 import type { AppConfig } from './config/configuration';
@@ -11,7 +11,10 @@ async function bootstrap(): Promise<void> {
 
   const config = app.get(ConfigService);
   const serviceName = config.getOrThrow<string>('serviceName');
-  const logger = new StructuredLogger(serviceName, config.getOrThrow<LogLevel>('logLevel'));
+  const logger = new StructuredLogger(
+    serviceName,
+    config.getOrThrow<LogLevel>('logLevel'),
+  );
   app.useLogger(logger);
 
   const tcp = config.getOrThrow<AppConfig['tcp']>('tcp');

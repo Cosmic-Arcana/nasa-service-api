@@ -9,6 +9,11 @@ import { Observable, tap } from 'rxjs';
 import type { Request, Response } from 'express';
 import type { MessageEnvelope } from '../messaging/message-envelope';
 
+function expressRoutePath(request: Request): string {
+  const route = request.route as { path?: unknown } | undefined;
+  return typeof route?.path === 'string' ? route.path : request.path;
+}
+
 @Injectable()
 export class LoggingInterceptor implements NestInterceptor {
   private readonly logger = new Logger(LoggingInterceptor.name);
@@ -19,7 +24,12 @@ export class LoggingInterceptor implements NestInterceptor {
 
     return next.handle().pipe(
       tap({
-        next: () => this.logger.log('inbound handled', { ...base, ...this.timing(startedAt), outcome: 'success' }),
+        next: () =>
+          this.logger.log('inbound handled', {
+            ...base,
+            ...this.timing(startedAt),
+            outcome: 'success',
+          }),
         error: (error: Error) =>
           this.logger.error('inbound failed', {
             ...base,
@@ -33,7 +43,9 @@ export class LoggingInterceptor implements NestInterceptor {
   }
 
   private timing(startedAt: bigint): { durationMs: number } {
-    return { durationMs: Number(process.hrtime.bigint() - startedAt) / 1_000_000 };
+    return {
+      durationMs: Number(process.hrtime.bigint() - startedAt) / 1_000_000,
+    };
   }
 
   private describe(context: ExecutionContext): Record<string, unknown> {
@@ -51,7 +63,7 @@ export class LoggingInterceptor implements NestInterceptor {
     return {
       transport: 'http',
       method: request.method,
-      route: request.route?.path ?? request.path,
+      route: expressRoutePath(request),
       statusCode: response.statusCode,
     };
   }
